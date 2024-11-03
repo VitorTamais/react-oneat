@@ -23,7 +23,67 @@ const CriarConta = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Lógica de envio do formulário
+  
+    try {
+      // Cria o endereço do restaurante
+      const addressRestaurante = {
+        rua: formData.ruaRestaurante,
+        numero: formData.numeroRestaurante,
+        cidade: formData.cidadeRestaurante,
+        estado: formData.estadoRestaurante,
+        bairro: formData.bairroRestaurante,
+        cep: formData.cepRestaurante
+      };
+  
+      const { data: insertedAddress, error: errorAddress } = await supabase
+        .from("EnderecoRestaurante")
+        .insert(addressRestaurante)
+        .select("id");
+  
+      if (errorAddress) {
+        throw new Error("Erro ao salvar o endereço do restaurante");
+      }
+  
+      // Cria o restaurante com o endereço inserido e proprietário como null
+      const restaurante = {
+        nome: formData.nomeRestaurante,
+        telefone: formData.telefoneRestaurante,
+        cnpj: formData.cnpj,
+        id_endereco: insertedAddress[0].id, // Referência ao ID do endereço inserido
+        proprietario: null, // Proprietário será definido na próxima etapa
+        categoria: "SuaCategoria" // Exemplo para preencher o campo 'categoria'
+      };
+  
+      const { error: errorRestaurante } = await supabase
+        .from("Restaurante")
+        .insert(restaurante);
+  
+      if (errorRestaurante) {
+        throw new Error("Erro ao salvar o restaurante");
+      }
+  
+      // Exibe a mensagem de sucesso usando SweetAlert2
+      Swal.fire({
+        title: 'Sucesso!',
+        text: 'Restaurante cadastrado com sucesso.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        customClass: {
+          confirmButton: 'btn-confirm', // Classe personalizada para o botão de confirmação
+        }
+      });
+    } catch (error) {
+      console.error(error);
+  
+  
+      // Exibe a mensagem de erro usando SweetAlert2
+      Swal.fire({
+        title: 'Erro!',
+        text: error.message || 'Ocorreu um erro ao salvar o restaurante.',
+        icon: 'error',
+        confirmButtonText: 'Tentar novamente'
+      });
+    }
   };
 
   const handleInputChange = (e) => {
@@ -148,7 +208,7 @@ const CriarConta = () => {
           />
         </div>
         <div className="button-container">
-        <button onClick={() => router.push("/cadSenha")} type="submit" className="btn-rest">
+        <button onClick={() => router.push("/cadastrarProprietario")} type="submit" className="btn-rest">
           Próximo
         </button>
       </div>

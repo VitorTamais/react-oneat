@@ -111,8 +111,6 @@ const Fornecedores = () => {
   };
 
   return (
-    <div>
-      <Aside />
       <main>
         <section className="supplier-header">
           <h1>Fornecedores</h1>
@@ -192,7 +190,6 @@ const Fornecedores = () => {
           </button>
         </div>
       </main>
-    </div>
   );
 };
 

@@ -283,7 +283,7 @@ const CriarProp = () => {
           />
         </div>
         </div>
-        <button onClick={()=> router.push("/cadSenha")} type="submit" id="btn_prox" className="btn-rest">
+        <button type="submit" id="btn_prox" className="btn-rest">
           Concluir
         </button>
       </form>

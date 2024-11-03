@@ -1,41 +1,63 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from 'next/navigation'; // Usando useRouter para navegação
 import styles from "./login.css"; 
-import Image from 'next/image'; // Importa o componente Image do Next.js
-import CadastrarRestaurante from '../cadastrarRestaurante/page';
+import Image from 'next/image'; 
 import Link from 'next/link';
+import supabase from "@/supabase";
+import { setCookie } from 'cookies-next';
+import Swal from "sweetalert2";
 
 // Importando as imagens da pasta 'img'
 import logo from '../public/img/logo.png';
 import eyeOff from '../public/img/eye-off.svg';
 import eyeOn from '../public/img/eye.svg';
-import loginSvg from '../public/img/login.svg';  // Renomeie para evitar conflito de nomes
+import loginSvg from '../public/img/login.svg';
 
 function Login() {
-  // Estado para alternar a visibilidade da senha
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Função para alternar entre mostrar/ocultar senha
-  const togglePassword = () => {
-    setPasswordVisible(!passwordVisible);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const { data: usuario, error } = await supabase
+        .from('AcessoGerenciamento')
+        .select('*')
+        .eq('usuario', email)
+        .eq('senha', senha);
+
+      if (error) throw error;
+
+      if (usuario && usuario.length > 0) {
+        // Usuário encontrado: Armazena o ID do restaurante em um cookie
+        setCookie('id_restaurante', usuario[0].id_restaurante, { maxAge: 60 * 60 * 24 });
+
+        router.push('/dashboard');
+      } else {
+        setErrorMessage("Email ou senha incorretos.");
+      }
+    } catch (error) {
+      console.error("Erro ao tentar login:", error.message);
+      setErrorMessage("Ocorreu um erro durante o login.");
+    }
   };
 
   return (
     <div id="page" className="flex">
       <div className="div-login">
         <header>
-          {/* Usando a imagem do logo */}
-            <Image src={logo} alt="Logo" width={150} height={50} /> {/* Defina a largura e altura */}
+          <Image src={logo} alt="Logo" width={150} height={50} />
         </header>
         <main>
           <div className="headline">
             <h1>Bem-vindo(a)!</h1>
-            <p>
-              Faça login ou cadastre-se para começar a fazer as suas compras.
-            </p>
+            <p>Faça login ou cadastre-se para começar a fazer as suas compras.</p>
           </div>
-          <form action="../BD/login.php" method="get">
+          <form id="login_red" onSubmit={handleLogin}>
             <div className="input-wrapper">
               <label htmlFor="email">E-mail</label>
               <input
@@ -44,6 +66,8 @@ function Login() {
                 name="email"
                 required
                 placeholder="Digite seu e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)} // Atualizando o estado do e-mail
               />
             </div>
 
@@ -54,41 +78,26 @@ function Login() {
               </div>
 
               <input
-                type={passwordVisible ? "text" : "password"}
+                type="password"
                 id="senha1"
                 name="senha1"
                 placeholder="Digite sua senha"
-              />
-
-              {/* Ícones de olho para alternar visibilidade da senha */}
-              <Image
-                onClick={togglePassword}
-                className={`eye ${passwordVisible ? "hide" : ""}`}
-                src={eyeOff}
-                alt="Mostrar senha"
-                width={24} // Defina a largura e altura apropriadas
-                height={24}
-              />
-              <Image
-                onClick={togglePassword}
-                className={`eye ${!passwordVisible ? "hide" : ""}`}
-                src={eyeOn}
-                alt="Ocultar senha"
-                width={24} // Defina a largura e altura apropriadas
-                height={24}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)} // Atualizando o estado da senha
               />
             </div>
+
+            {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Exibe a mensagem de erro */}
 
             <button type="submit">Entrar</button>
 
             <div className="create-account">
-        Ainda não tem uma conta? <Link href="/cadastrarRestaurante">Cadastre-se</Link>
-      </div>
+              Ainda não tem uma conta? <Link href="/cadastrarRestaurante">Cadastre-se</Link>
+            </div>
           </form>
         </main>
       </div>
-      {/* Usando a imagem de login */}
-      <Image src={loginSvg} alt="Ilustração de login" width={400} height={300} /> {/* Defina a largura e altura */}
+      <Image src={loginSvg} alt="Ilustração de login" width={400} height={300} />
     </div>
   );
 }
