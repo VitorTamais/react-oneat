@@ -4,57 +4,6 @@ import React, { useState, useEffect } from "react";
 import supabase from "@/supabase";
 import Swal from "sweetalert2"; // Importa o SweetAlert2
 
-
-// Define a função no escopo global
-window.meu_callback = function (conteudo) {
-  if (!("erro" in conteudo)) {
-    // Atualiza os campos com os valores recebidos da API
-    document.getElementById('address').value = conteudo.logradouro;
-    document.getElementById('bairro').value = conteudo.bairro;
-    document.getElementById('city').value = conteudo.localidade;
-    document.getElementById('state').value = conteudo.uf;
-  } else {
-    // CEP não encontrado
-    limpa_formulário_cep();
-    alert("CEP não encontrado.");
-  }
-};
-
-function limpa_formulário_cep() {
-  // Limpa os valores do formulário de CEP
-  document.getElementById('address').value = "";
-  document.getElementById('bairro').value = "";
-  document.getElementById('city').value = "";
-  document.getElementById('state').value = "";
-}
-
-function pesquisacep(valor) {
-  // Remove tudo que não seja número
-  const cep = valor.replace(/\D/g, '');
-
-  if (cep !== "") {
-    const validacep = /^[0-9]{8}$/;
-
-    if (validacep.test(cep)) {
-      document.getElementById('address').value = "...";
-      document.getElementById('bairro').value = "...";
-      document.getElementById('city').value = "...";
-      document.getElementById('state').value = "...";
-
-      // Cria um script para chamar a API ViaCEP
-      const script = document.createElement('script');
-      script.src = `https://viacep.com.br/ws/${cep}/json/?callback=meu_callback`;
-      document.body.appendChild(script);
-    } else {
-      limpa_formulário_cep();
-      alert("Formato de CEP inválido.");
-    }
-  } else {
-    limpa_formulário_cep();
-  }
-}
-
-
 const AdicionarFornecedor = () => {
   const [formData, setFormData] = useState({});
 
