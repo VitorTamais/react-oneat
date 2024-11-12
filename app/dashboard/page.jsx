@@ -41,8 +41,6 @@ export default function Dashboard() {
       </div>
       <div className='flex flex-row'>
         <Insights />
-        <Insights />
-        <Insights />
       </div>
       <RecentOrders />
     </main>

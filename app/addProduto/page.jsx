@@ -13,9 +13,41 @@ const AdicionarProduto = () => {
     description: "",
     price: "",
     category: "",
-    unit: "",
-    stock: "",
+    image: null, // Campo para armazenar a imagem
   });
+
+  // Função para sanitizar o nome do arquivo
+  const sanitizeFileName = (fileName) => {
+    return fileName
+      .normalize('NFD') // Normaliza o nome do arquivo
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentuação
+      .replace(/\s+/g, '-') // Substitui espaços por traços
+      .replace(/[^a-zA-Z0-9.-]/g, ''); // Remove qualquer caractere especial
+  };
+
+  // Função para salvar a imagem no bucket de storage do Supabase
+  const uploadImage = async (file) => {
+    if (!file) return null;
+
+    try {
+      // Sanitiza o nome do arquivo para garantir que seja seguro
+      const fileName = `${Date.now()}-${sanitizeFileName(file.name)}`;
+
+      const { data, error } = await supabase.storage
+        .from("produtos")
+        .upload(`public/${fileName}`, file); // Adiciona o caminho correto no bucket
+
+      if (error) {
+        console.error("Erro detalhado no upload:", error.message);
+        throw new Error("Erro ao enviar a imagem.");
+      }
+
+      return data.path; // Retorna o caminho da imagem no bucket
+    } catch (error) {
+      console.error("Erro no upload:", error.message);
+      throw new Error("Erro ao enviar a imagem.");
+    }
+  };
 
   // Função para salvar o produto no banco de dados
   const handleSubmit = async (e) => {
@@ -26,6 +58,17 @@ const AdicionarProduto = () => {
         throw new Error("Restaurante não autenticado.");
       }
 
+      // Valida se o preço é um número válido
+      if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
+        throw new Error("Preço inválido.");
+      }
+
+      // Envia a imagem ao Supabase Storage, se houver
+      let imageUrl = null;
+      if (formData.image) {
+        imageUrl = await uploadImage(formData.image);
+      }
+
       // Monta o objeto do produto para inserção
       const product = {
         nome: formData.name,
@@ -33,14 +76,18 @@ const AdicionarProduto = () => {
         preco: parseFloat(formData.price),
         categoria: formData.category,
         id_restaurante: user.id_restaurante,
+        imagem: imageUrl, // Salva a URL da imagem se houver
       };
 
+      // Insere o produto no banco de dados
       const { error } = await supabase.from("Produto").insert(product);
 
       if (error) {
+        console.error("Erro ao salvar o produto:", error.message);
         throw new Error("Erro ao salvar o produto.");
       }
 
+      // Exibe mensagem de sucesso
       Swal.fire({
         title: 'Sucesso!',
         text: 'Produto cadastrado com sucesso.',
@@ -54,6 +101,7 @@ const AdicionarProduto = () => {
         description: "",
         price: "",
         category: "",
+        image: null,
       });
 
     } catch (error) {
@@ -69,11 +117,18 @@ const AdicionarProduto = () => {
 
   // Função para lidar com mudanças nos campos do formulário
   const handleInputChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: value,
-    }));
+    const { id, value, files } = e.target;
+    if (id === "image") {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        image: files[0], // Armazena o arquivo da imagem
+      }));
+    } else {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [id]: value,
+      }));
+    }
   };
 
   return (
@@ -123,12 +178,28 @@ const AdicionarProduto = () => {
           />
         </div>
 
+        <div className="form-group">
+          <label htmlFor="image">Imagem do Produto</label>
+          <input
+            type="file"
+            id="image"
+            accept="image/*"
+            onChange={handleInputChange}
+          />
+        </div>
+
         <div className="button-group">
           <button type="submit">Salvar</button>
           <button
             type="button"
             className="cancel-button"
-            onClick={() => setFormData({})}
+            onClick={() => setFormData({
+              name: "",
+              description: "",
+              price: "",
+              category: "",
+              image: null,
+            })}
           >
             Cancelar
           </button>
