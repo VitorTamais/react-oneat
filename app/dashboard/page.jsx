@@ -1,35 +1,34 @@
+// pages/dashboard.js
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/context/authContext'; // Importando o contexto de autenticação
 import Insights from '../components/Insights';
 import RecentOrders from '../components/RecentOrders';
 import SalesAnalytics from '../components/SalesAnalytics';
-import style from "../globals.css"
-import { useEffect, useState } from 'react';
-import { getCookie } from 'cookies-next';
+import style from "../globals.css";
 import supabase from '@/supabase';
 
 export default function Dashboard() {
+  const { user } = useAuth(); // Acessando o usuário logado a partir do contexto
   const [dadosRestaurante, setDadosRestaurante] = useState(null);
 
   useEffect(() => {
     const fetchDadosRestaurante = async () => {
-      const idRestaurante = getCookie('id_restaurante');
-      
-      if (idRestaurante) {
+      if (user && user.id_restaurante) {
         const { data, error } = await supabase
           .from('Restaurante')
           .select('*')
-          .eq('id', idRestaurante);
-        
-        if (!error) {
+          .eq('id', user.id_restaurante); // Usando o id_restaurante do contexto
+
+        if (!error && data.length > 0) {
           setDadosRestaurante(data[0]);
         }
       }
     };
 
     fetchDadosRestaurante();
-  }, []);
+  }, [user]);
 
   return (
     <main>
@@ -46,11 +45,6 @@ export default function Dashboard() {
         <Insights />
       </div>
       <RecentOrders />
-      <div className="right">
-        <SalesAnalytics />
-      </div>
     </main>
   );
 };
-
-

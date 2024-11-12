@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import supabase from "@/supabase";
 import Swal from "sweetalert2"; // Importa o SweetAlert2
+import style from "./addFornecedor.css"; 
 
 const AdicionarFornecedor = () => {
   const [formData, setFormData] = useState({});
